@@ -1,16 +1,12 @@
-import { useRef, type KeyboardEvent } from 'react'
-import { useStore, type ButtonShape, type ButtonStyle, type HeadlineStyle, type ThemeId } from '../store'
+import { useRef, type CSSProperties, type KeyboardEvent } from 'react'
+import { useStore, type ButtonShape, type ButtonStyle, type HeadlineStyle, type Look, type ThemeId } from '../store'
+import { background, PRESETS, resolveTheme } from '../theme'
 import { Chip, Segmented } from './ui'
 import { Section } from './Section'
+import { ThemeEditor } from './ThemeEditor'
+import { useToast } from './Toast'
 import checkIcon from '../assets/icons/check-dark.svg'
 import lockIcon from '../assets/icons/lock.svg'
-
-const THEMES: { id: ThemeId; label: string }[] = [
-  { id: 'neon-night', label: 'Neon Night' },
-  { id: 'lime-lead', label: 'Lime Lead' },
-  { id: 'full-bleed-lime', label: 'Full-bleed Lime' },
-  { id: 'ai-blue', label: 'AI Blue' },
-]
 
 const BUTTON_STYLES: { value: ButtonStyle; label: string }[] = [
   { value: 'hard-shadow', label: 'Hard shadow' },
@@ -29,19 +25,63 @@ const HEADLINES: { value: HeadlineStyle; label: string }[] = [
   { value: 'lean', label: 'Lean 8°' },
 ]
 
+type ThemeOption = { key: string; label: string; look: Omit<Look, 'savedId'>; selected: boolean; onSelect: () => void }
+
+/** Mini page swatch drawn from the same tokens as the real profile. */
+function swatchStyle(look: ThemeOption['look']): CSSProperties {
+  const t = resolveTheme(look)
+  return {
+    '--tc-canvas': background(t),
+    '--tc-text': t.text,
+    '--tc-accent': t.accent,
+    '--tc-button': look.buttonStyle === 'outline' ? 'transparent' : t.button,
+    '--tc-outline': look.buttonStyle === 'outline' ? t.button : 'transparent',
+    '--tc-shadow': look.buttonStyle === 'hard-shadow' ? t.buttonShadow : 'transparent',
+    '--tc-radius': `${Math.min(t.buttonRadius, 7)}px`,
+  } as CSSProperties
+}
+
 function ThemePicker({ compact }: { compact: boolean }) {
   const { profile, dispatch } = useStore()
+  const toast = useToast()
+  const { look } = profile
   const refs = useRef<(HTMLButtonElement | null)[]>([])
-  const select = (theme: ThemeId) => dispatch({ type: 'look', patch: { theme } })
+
+  const selectPreset = (theme: ThemeId) => {
+    const prev = look
+    dispatch({ type: 'look', patch: { theme, custom: {}, savedId: null } })
+    if (Object.keys(prev.custom).length && !prev.savedId) {
+      toast({ message: 'Custom edits cleared', action: { label: 'Undo', onClick: () => dispatch({ type: 'look', patch: prev }) } })
+    }
+  }
+
+  const options: ThemeOption[] = [
+    ...PRESETS.map((preset) => ({
+      key: preset.id,
+      label: preset.label,
+      look: { ...look, theme: preset.id, custom: {} },
+      selected: !look.savedId && look.theme === preset.id,
+      onSelect: () => selectPreset(preset.id),
+    })),
+    ...profile.savedThemes.map((saved) => ({
+      key: saved.id,
+      label: saved.name,
+      look: saved.look,
+      selected: look.savedId === saved.id,
+      onSelect: () => dispatch({ type: 'applyTheme', id: saved.id }),
+    })),
+  ]
 
   const onKeyDown = (e: KeyboardEvent, index: number) => {
     const step = e.key === 'ArrowRight' || e.key === 'ArrowDown' ? 1 : e.key === 'ArrowLeft' || e.key === 'ArrowUp' ? -1 : 0
     if (!step) return
     e.preventDefault()
-    const next = (index + step + THEMES.length) % THEMES.length
-    select(THEMES[next].id)
+    const next = (index + step + options.length) % options.length
+    options[next].onSelect()
     refs.current[next]?.focus()
   }
+
+  const hasSelection = options.some((o) => o.selected)
 
   return (
     <div className="look-group">
@@ -49,41 +89,39 @@ function ThemePicker({ compact }: { compact: boolean }) {
         Theme
       </p>
       <div role="radiogroup" aria-labelledby="theme-label" className={compact ? 'theme-carousel' : 'theme-grid'}>
-        {THEMES.map((theme, i) => {
-          const selected = profile.look.theme === theme.id
-          return (
-            <button
-              key={theme.id}
-              ref={(el) => {
-                refs.current[i] = el
-              }}
-              type="button"
-              role="radio"
-              aria-checked={selected}
-              tabIndex={selected ? 0 : -1}
-              className={`theme-card theme-card--${theme.id}${selected ? ' theme-card--selected' : ''}`}
-              onClick={() => select(theme.id)}
-              onKeyDown={(e) => onKeyDown(e, i)}
-            >
-              <span className="theme-card__preview" aria-hidden>
-                <span className="theme-card__name-row">
-                  <span className="theme-card__name" />
-                  <span className="theme-card__accent" />
+        {options.map((option, i) => (
+          <button
+            key={option.key}
+            ref={(el) => {
+              refs.current[i] = el
+            }}
+            type="button"
+            role="radio"
+            aria-checked={option.selected}
+            tabIndex={option.selected || (!hasSelection && i === 0) ? 0 : -1}
+            className={`theme-card${option.selected ? ' theme-card--selected' : ''}`}
+            style={swatchStyle(option.look)}
+            onClick={option.onSelect}
+            onKeyDown={(e) => onKeyDown(e, i)}
+          >
+            <span className="theme-card__preview" aria-hidden>
+              <span className="theme-card__name-row">
+                <span className="theme-card__name" />
+                <span className="theme-card__accent" />
+              </span>
+              <span className="theme-card__button" />
+              <span className="theme-card__button" />
+            </span>
+            <span className="theme-card__footer">
+              <span className="t-label theme-card__label">{option.label}</span>
+              {option.selected && (
+                <span className="theme-card__check">
+                  <img src={checkIcon} alt="" width={14} height={14} />
                 </span>
-                <span className="theme-card__button" />
-                <span className="theme-card__button" />
-              </span>
-              <span className="theme-card__footer">
-                <span className="t-label">{theme.label}</span>
-                {selected && (
-                  <span className="theme-card__check">
-                    <img src={checkIcon} alt="" width={14} height={14} />
-                  </span>
-                )}
-              </span>
-            </button>
-          )
-        })}
+              )}
+            </span>
+          </button>
+        ))}
       </div>
     </div>
   )
@@ -111,7 +149,11 @@ export function LookSection({ compact }: { compact: boolean }) {
           label="Button shape"
           options={BUTTON_SHAPES}
           value={look.buttonShape}
-          onChange={(buttonShape) => dispatch({ type: 'look', patch: { buttonShape } })}
+          onChange={(buttonShape) => {
+            // Picking a shape wins over a custom radius from the theme editor.
+            dispatch({ type: 'look', patch: { buttonShape } })
+            dispatch({ type: 'resetCustom', keys: ['buttonRadius'] })
+          }}
         />
       </div>
       <div className="look-group">
@@ -123,6 +165,7 @@ export function LookSection({ compact }: { compact: boolean }) {
           onChange={(headline) => dispatch({ type: 'look', patch: { headline } })}
         />
       </div>
+      <ThemeEditor />
       {!compact && (
         <div className="look-group">
           <p className="t-label">Fonts</p>

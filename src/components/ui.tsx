@@ -238,10 +238,16 @@ export function Chip({ children }: { children: ReactNode }) {
 
 /* ---------- Reset (inline text action) ---------- */
 
-function ResetButton({ label, onClick }: { label: string; onClick: () => void }) {
+function ResetButton({ label, onClick, compact }: { label: string; onClick: () => void; compact?: boolean }) {
   return (
-    <button type="button" className="reset-btn t-caption" aria-label={`Reset ${label}`} title="Back to the theme default" onClick={onClick}>
-      Reset
+    <button
+      type="button"
+      className={compact ? 'reset-btn reset-btn--corner' : 'reset-btn t-caption'}
+      aria-label={`Reset ${label}`}
+      title="Back to the theme default"
+      onClick={onClick}
+    >
+      {compact ? '↺' : 'Reset'}
     </button>
   )
 }
@@ -292,7 +298,7 @@ export function ColorField({ label, value, onChange, onReset }: ColorFieldProps)
           onBlur={() => setDraft(value)}
         />
       </span>
-      {onReset && <ResetButton label={label} onClick={onReset} />}
+      {onReset && <ResetButton compact label={label} onClick={onReset} />}
     </div>
   )
 }

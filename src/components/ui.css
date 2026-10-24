@@ -282,8 +282,25 @@ textarea.field__control {
   color: var(--ui-text-primary);
 }
 
+.reset-btn--corner {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-pill);
+  background: var(--ui-border-subtle);
+  font-size: 13px;
+  line-height: 1;
+  text-decoration: none;
+}
+
 /* ---------- Input/Color ---------- */
 .color-field {
+  position: relative;
   display: flex;
   align-items: center;
   gap: var(--space-12);
@@ -345,7 +362,8 @@ textarea.field__control {
   border: 0;
   outline: none;
   background: none;
-  font-variant-numeric: tabular-nums;
+  /* Raleway defaults to old-style figures, where 0 reads as o. */
+  font-variant-numeric: lining-nums tabular-nums;
   text-transform: lowercase;
   caret-color: var(--ui-accent);
 }
