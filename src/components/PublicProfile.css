@@ -1,22 +1,7 @@
 /* Public Profile · Mobile — single source of truth for every preview. */
 
 .pp {
-  /* Neon Night (default theme) */
-  --pp-canvas: #0a0a0a;
-  --pp-text: #ffffff;
-  --pp-accent: #ff1cba;
-  --pp-muted: #b8b8b8;
-  --pp-kicker: #e1f000;
-  --pp-border: #ffffff;
-  --pp-button: #ff1cba;
-  --pp-button-shadow: #e1f000;
-  --pp-on-button: #ffffff;
-  --pp-sticker: #e1f000;
-  --pp-on-sticker: #0a0a0a;
-  --pp-avatar-frame: #ff1cba;
-  --pp-avatar-shadow: #e1f000;
-  --pp-button-radius: 0;
-
+  /* Theme tokens (--pp-*) are set inline from theme.ts — presets plus user overrides. */
   position: relative;
   display: flex;
   flex-direction: column;
@@ -26,57 +11,19 @@
   min-height: 844px;
   padding: var(--space-8) var(--space-24) var(--space-40);
   overflow: hidden;
-  background: var(--pp-canvas);
+  background: var(--pp-bg);
   color: var(--pp-text);
   font-family: var(--font-body);
   isolation: isolate;
 }
 
-.pp--lime-lead {
-  --pp-accent: #e1f000;
-  --pp-button: #e1f000;
-  --pp-button-shadow: #ff1cba;
-  --pp-on-button: #0a0a0a;
-}
-
-.pp--full-bleed-lime {
-  --pp-canvas: #e1f000;
-  --pp-text: #0a0a0a;
-  --pp-accent: #0a0a0a;
-  --pp-muted: rgba(10, 10, 10, 0.72);
-  --pp-kicker: #0a0a0a;
-  --pp-border: #0a0a0a;
-  --pp-button: #0a0a0a;
-  --pp-button-shadow: #ff1cba;
-  --pp-on-button: #ffffff;
-  --pp-sticker: #ff1cba;
-  --pp-avatar-shadow: #0a0a0a;
-}
-
-.pp--ai-blue {
-  --pp-accent: #e1f000;
-  --pp-button: #545eff;
-  --pp-button-shadow: #e1f000;
-}
-
-.pp--shape-rounded {
-  --pp-button-radius: var(--radius-lg);
-}
-
-.pp--shape-pill {
-  --pp-button-radius: var(--radius-pill);
-}
-
-/* Glows */
+/* Glows — blurred discs (Figma: 320/280px circles, 70px blur, 45%/16% opacity) */
 .pp__glow {
   position: absolute;
   z-index: -1;
+  border-radius: 50%;
+  filter: blur(70px);
   pointer-events: none;
-}
-
-.pp__glow img {
-  position: absolute;
-  max-width: none;
 }
 
 .pp__glow--primary {
@@ -84,10 +31,8 @@
   top: -150px;
   width: 320px;
   height: 320px;
-}
-
-.pp__glow--primary img {
-  inset: -43.75%;
+  background: var(--pp-glow-primary);
+  opacity: calc(0.45 * var(--pp-glow-strength));
 }
 
 .pp__glow--secondary {
@@ -95,14 +40,8 @@
   bottom: -196px;
   width: 280px;
   height: 280px;
-}
-
-.pp__glow--secondary img {
-  inset: -50%;
-}
-
-.pp--full-bleed-lime .pp__glow--secondary {
-  display: none;
+  background: var(--pp-glow-secondary);
+  opacity: calc(0.16 * var(--pp-glow-strength));
 }
 
 .pp-glyph {
@@ -135,7 +74,8 @@
   flex-shrink: 0;
   width: 48px;
   height: 48px;
-  border: 1.5px solid var(--pp-border);
+  border: var(--pp-border-width) solid var(--pp-border);
+  border-radius: var(--pp-icon-radius);
   color: var(--pp-text);
   text-decoration: none;
 }
@@ -167,10 +107,12 @@ a.pp__square-btn:hover {
   top: 25.96px;
   width: 112px;
   height: 112px;
+  overflow: hidden;
   border: 6px solid var(--pp-avatar-frame);
+  border-radius: var(--pp-avatar-radius);
   box-shadow: 10px 10px 0 0 var(--pp-avatar-shadow);
   background: var(--pp-canvas);
-  transform: rotate(-4deg);
+  transform: rotate(var(--pp-avatar-tilt));
 }
 
 .pp__avatar img {
@@ -196,7 +138,7 @@ a.pp__square-btn:hover {
 .pp__sticker-bubble {
   display: block;
   padding: 0 var(--space-16);
-  border-radius: var(--radius-lg);
+  border-radius: var(--pp-sticker-radius);
   background: var(--pp-sticker);
   color: var(--pp-on-sticker);
   font-family: var(--font-display);
@@ -311,8 +253,8 @@ a.pp__square-btn:hover {
   display: inline-flex;
   align-items: center;
   padding: 6px 14px;
-  border: 1.5px solid var(--pp-border);
-  border-radius: var(--radius-pill);
+  border: var(--pp-border-width) solid var(--pp-border);
+  border-radius: var(--pp-chip-radius);
   color: var(--pp-text);
   font-weight: 800;
   font-size: 12px;
@@ -339,7 +281,7 @@ a.pp__square-btn:hover {
   display: flex;
   align-items: center;
   gap: var(--space-12);
-  height: 56px;
+  height: var(--pp-button-height);
   padding: 0 var(--space-20);
   background: var(--pp-button);
   color: var(--pp-on-button);
@@ -349,22 +291,24 @@ a.pp__square-btn:hover {
 }
 
 .pp--btn-hard-shadow .pp__link {
-  box-shadow: 6px 6px 0 0 var(--pp-button-shadow);
+  box-shadow: var(--pp-shadow-offset) var(--pp-shadow-offset) 0 0 var(--pp-button-shadow);
 }
 
 .pp--btn-hard-shadow a.pp__link:hover {
-  box-shadow: 10px 10px 0 0 var(--pp-button-shadow);
+  --lift: calc(var(--pp-shadow-offset) + 4px);
+  box-shadow: var(--lift) var(--lift) 0 0 var(--pp-button-shadow);
   transform: translate(-2px, -2px);
 }
 
 .pp--btn-hard-shadow a.pp__link:active {
-  box-shadow: 4px 4px 0 0 var(--pp-button-shadow);
+  --press: max(0px, calc(var(--pp-shadow-offset) - 2px));
+  box-shadow: var(--press) var(--press) 0 0 var(--pp-button-shadow);
   transform: translate(2px, 2px);
 }
 
 .pp--btn-outline .pp__link {
   background: transparent;
-  border: 2px solid var(--pp-button);
+  border: max(2px, var(--pp-border-width)) solid var(--pp-button);
   color: var(--pp-text);
 }
 

@@ -9,6 +9,21 @@ import arrowUpRight from '../assets/icons/arrow-up-right.svg'
 import moreIcon from '../assets/icons/more.svg'
 import eyeIcon from '../assets/icons/eye.svg'
 
+export type AppView = 'editor' | 'analytics'
+
+export function ViewTabs({ view, className = '' }: { view: AppView; className?: string }) {
+  return (
+    <nav className={`view-tabs ${className}`} aria-label="Sections">
+      <a href="#editor" className="view-tabs__tab" aria-current={view === 'editor' ? 'page' : undefined}>
+        Editor
+      </a>
+      <a href="#analytics" className="view-tabs__tab" aria-current={view === 'analytics' ? 'page' : undefined}>
+        Analytics
+      </a>
+    </nav>
+  )
+}
+
 function Logo() {
   return (
     <a href="/" className="logo" aria-label="LinkUp home">
@@ -53,7 +68,7 @@ function usePublish() {
   return () => toast({ message: `Published to ${PAGE_URL}` })
 }
 
-export function Topbar({ compact, onPreview }: { compact: boolean; onPreview: () => void }) {
+export function Topbar({ compact, view, onPreview }: { compact: boolean; view: AppView; onPreview: () => void }) {
   const copyLink = useCopyLink()
   const publish = usePublish()
   const [menuOpen, setMenuOpen] = useState(false)
@@ -108,6 +123,7 @@ export function Topbar({ compact, onPreview }: { compact: boolean; onPreview: ()
           <img src={copyIcon} alt="" width={16} height={16} />
         </button>
       </div>
+      <ViewTabs view={view} />
       <div className="topbar__spacer" />
       <SaveStatus />
       <Button icon={arrowUpRight} onClick={onPreview}>

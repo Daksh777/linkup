@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import { PAGE_URL, useStore } from '../store'
+import { bottomColor, resolveTheme } from '../theme'
 import { PublicProfile } from './PublicProfile'
 import { Section } from './Section'
 import { PanelHeader, Segmented } from './ui'
@@ -60,7 +61,7 @@ export function PeekPreview() {
           <PublicProfile profile={profile} />
           <div
             className="device__fade"
-            style={{ '--fade-to': profile.look.theme === 'full-bleed-lime' ? '#e1f000' : '#0a0a0a' } as CSSProperties}
+            style={{ '--fade-to': bottomColor(resolveTheme(profile.look)) } as CSSProperties}
           />
         </div>
         <p className="t-caption t-muted">Tap Preview for full screen</p>

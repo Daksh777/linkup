@@ -24,6 +24,17 @@ npm run build
 - **Autosave:** saves to `localStorage` 600 ms after the last edit; the top bar shows "Saving…" then "All changes saved".
 - **Preview / Publish:** Preview opens a full-screen view with working links. Publish only shows a confirmation toast (there's no backend).
 
+## Analytics (`#analytics`)
+
+This tab shows how link analytics would look. It is **frontend-only and uses sample data**: `src/analytics/data.ts` generates 180 days of traffic from a fixed seed, so the numbers don't change between reloads. To use real data, replace `getAnalytics()` with an API call that returns the same shape.
+
+- **Date range** (7 / 30 / 90 days) applies to every number on the page.
+- **Stat tiles:** views, link clicks, click-through rate, and unique visitors, each with a trend sparkline and the change vs the previous period.
+- **Traffic chart:** daily views and clicks on one axis, with a crosshair tooltip you can also move with the arrow keys.
+- **Link performance** uses the links from the editor, so renaming, reordering or hiding a link shows up here.
+- **Also included:** traffic sources, devices, top locations, and social icon clicks.
+- Every chart has a **Table** view. The chart colors are slightly adjusted brand hues that passed color-blind and contrast checks on the dark background.
+
 ## Structure
 
 ```
@@ -37,5 +48,9 @@ src/
     Preview.tsx             live preview, mobile peek, full-screen overlay
     Bars.tsx                Topbar + mobile BottomBar
     Toast.tsx
+  analytics/
+    data.ts                 seeded sample data + formatters
+    charts.tsx              TrafficChart, BarList, SplitBar, Sparkline (hand-rolled SVG/CSS)
+    AnalyticsPage.tsx       the dashboard
   assets/                   icons and images exported from Figma
 ```

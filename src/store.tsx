@@ -1,4 +1,5 @@
 import defaultAvatar from './assets/img/avatar.jpg'
+import type { ThemeCustom } from './theme'
 import { createContext, useContext, useEffect, useReducer, useRef, useState, type ReactNode } from 'react'
 
 export type ThemeId = 'neon-night' | 'lime-lead' | 'full-bleed-lime' | 'ai-blue'
@@ -14,6 +15,23 @@ export type LinkItem = {
   visible: boolean
 }
 
+export type Look = {
+  theme: ThemeId
+  buttonStyle: ButtonStyle
+  buttonShape: ButtonShape
+  headline: HeadlineStyle
+  /** User overrides on top of the preset; empty means the preset as designed. */
+  custom: ThemeCustom
+  /** The saved theme this look was applied from, if any. */
+  savedId: string | null
+}
+
+export type SavedTheme = {
+  id: string
+  name: string
+  look: Omit<Look, 'savedId'>
+}
+
 export type Profile = {
   photo: string | null
   name: string
@@ -23,15 +41,11 @@ export type Profile = {
   pillars: string[]
   links: LinkItem[]
   socials: Record<SocialId, string>
-  look: {
-    theme: ThemeId
-    buttonStyle: ButtonStyle
-    buttonShape: ButtonShape
-    headline: HeadlineStyle
-  }
+  look: Look
+  savedThemes: SavedTheme[]
 }
 
-export const LIMITS = { name: 30, tagline: 40, bio: 80, linkTitle: 40, links: 4 }
+export const LIMITS = { name: 30, tagline: 40, bio: 80, linkTitle: 40, links: 4, themeName: 24, savedThemes: 8 }
 
 export const PAGE_URL = 'linkup.to/chetnagrover'
 
@@ -60,13 +74,23 @@ export const initialProfile: Profile = {
     buttonStyle: 'hard-shadow',
     buttonShape: 'square',
     headline: 'straight',
+    custom: {},
+    savedId: null,
   },
+  savedThemes: [],
 }
 
 type Action =
   | { type: 'set'; field: 'photo' | 'name' | 'tagline' | 'bio'; value: string | null }
   | { type: 'social'; id: SocialId; value: string }
-  | { type: 'look'; patch: Partial<Profile['look']> }
+  | { type: 'look'; patch: Partial<Look> }
+  | { type: 'custom'; patch: ThemeCustom }
+  | { type: 'resetCustom'; keys: (keyof ThemeCustom)[] }
+  | { type: 'saveTheme'; name: string }
+  | { type: 'updateTheme'; id: string }
+  | { type: 'applyTheme'; id: string }
+  | { type: 'deleteTheme'; id: string }
+  | { type: 'restoreTheme'; theme: SavedTheme; index: number }
   | { type: 'link'; id: string; patch: Partial<LinkItem> }
   | { type: 'addLink' }
   | { type: 'duplicateLink'; id: string }
@@ -82,6 +106,32 @@ function reducer(state: Profile, action: Action): Profile {
       return { ...state, socials: { ...state.socials, [action.id]: action.value } }
     case 'look':
       return { ...state, look: { ...state.look, ...action.patch } }
+    case 'custom':
+      return { ...state, look: { ...state.look, custom: { ...state.look.custom, ...action.patch } } }
+    case 'resetCustom': {
+      const custom = { ...state.look.custom }
+      for (const key of action.keys) delete custom[key]
+      return { ...state, look: { ...state.look, custom } }
+    }
+    case 'saveTheme': {
+      if (state.savedThemes.length >= LIMITS.savedThemes) return state
+      const theme: SavedTheme = { id: newId(), name: action.name, look: snapshot(state.look) }
+      return { ...state, savedThemes: [...state.savedThemes, theme], look: { ...state.look, savedId: theme.id } }
+    }
+    case 'updateTheme':
+      return { ...state, savedThemes: state.savedThemes.map((t) => (t.id === action.id ? { ...t, look: snapshot(state.look) } : t)) }
+    case 'applyTheme': {
+      const theme = state.savedThemes.find((t) => t.id === action.id)
+      return theme ? { ...state, look: { ...theme.look, savedId: theme.id } } : state
+    }
+    case 'deleteTheme':
+      return {
+        ...state,
+        savedThemes: state.savedThemes.filter((t) => t.id !== action.id),
+        look: state.look.savedId === action.id ? { ...state.look, savedId: null } : state.look,
+      }
+    case 'restoreTheme':
+      return { ...state, savedThemes: insert(state.savedThemes, action.index, action.theme) }
     case 'link':
       return { ...state, links: state.links.map((l) => (l.id === action.id ? { ...l, ...action.patch } : l)) }
     case 'addLink':
@@ -104,6 +154,10 @@ function reducer(state: Profile, action: Action): Profile {
       return { ...state, links }
     }
   }
+}
+
+export function snapshot({ savedId: _savedId, ...look }: Look): SavedTheme['look'] {
+  return look
 }
 
 function insert<T>(list: T[], index: number, item: T): T[] {
@@ -129,7 +183,9 @@ function loadProfile(): Profile {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (raw) {
-      const saved: Profile = { ...initialProfile, ...JSON.parse(raw) }
+      const parsed = JSON.parse(raw)
+      // Profiles saved before the theme editor have no custom/savedId on their look.
+      const saved: Profile = { ...initialProfile, ...parsed, look: { ...initialProfile.look, ...parsed.look } }
       // Bundled asset URLs change between builds; only uploaded photos (data URLs) are kept.
       if (saved.photo && !saved.photo.startsWith('data:')) saved.photo = defaultAvatar
       return saved

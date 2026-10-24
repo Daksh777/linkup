@@ -1,8 +1,7 @@
 import type { CSSProperties, ReactNode } from 'react'
 import { toHref, type Profile, type SocialId } from '../store'
+import { resolveTheme, themeStyle } from '../theme'
 import logoBadge from '../assets/img/logo-badge.png'
-import glowPrimary from '../assets/img/glow-primary.svg'
-import glowSecondary from '../assets/img/glow-secondary.svg'
 import stickerTail from '../assets/icons/sticker-tail.svg'
 import shareIcon from '../assets/icons/share.svg'
 import mapPin from '../assets/icons/map-pin.svg'
@@ -101,14 +100,11 @@ export function PublicProfile({ profile, interactive = false, className }: Publi
 
   return (
     <div
-      className={`pp pp--${look.theme} pp--btn-${look.buttonStyle} pp--shape-${look.buttonShape} pp--headline-${look.headline}${className ? ` ${className}` : ''}`}
+      className={`pp pp--btn-${look.buttonStyle} pp--headline-${look.headline}${className ? ` ${className}` : ''}`}
+      style={themeStyle(resolveTheme(look))}
     >
-      <div className="pp__glow pp__glow--primary">
-        <img src={glowPrimary} alt="" width={600} height={600} />
-      </div>
-      <div className="pp__glow pp__glow--secondary">
-        <img src={glowSecondary} alt="" width={560} height={560} />
-      </div>
+      <div className="pp__glow pp__glow--primary" />
+      <div className="pp__glow pp__glow--secondary" />
 
       <div className="pp__topbar">
         <img src={logoBadge} alt="The Design Square" width={56} height={56} className="pp__logo" />

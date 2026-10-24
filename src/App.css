@@ -160,6 +160,48 @@
   white-space: nowrap;
 }
 
+/* ---------- Editor / Analytics tabs ---------- */
+.view-tabs {
+  display: flex;
+  gap: var(--space-4);
+}
+
+.view-tabs__tab {
+  display: inline-flex;
+  align-items: center;
+  height: 36px;
+  padding: 0 var(--space-16);
+  border-radius: var(--radius-pill);
+  color: var(--ui-text-muted);
+  font-weight: 600;
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.view-tabs__tab:hover {
+  color: var(--ui-text-primary);
+}
+
+.view-tabs__tab[aria-current='page'] {
+  background: var(--ui-bg-field);
+  color: var(--ui-text-primary);
+  box-shadow: inset 0 -2px 0 var(--ui-accent);
+}
+
+.view-tabs--mobile {
+  position: sticky;
+  top: 56px;
+  z-index: 9;
+  padding: var(--space-8) var(--space-16);
+  background: var(--ui-bg-app);
+  border-bottom: 1px solid var(--ui-border-subtle);
+}
+
+.view-tabs--mobile .view-tabs__tab {
+  flex: 1;
+  justify-content: center;
+}
+
 /* ---------- BottomBar/Editor ---------- */
 .bottom-bar {
   position: fixed;

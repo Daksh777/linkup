@@ -1,4 +1,5 @@
-import { useId, useRef, type KeyboardEvent, type ReactNode, type TextareaHTMLAttributes, type InputHTMLAttributes } from 'react'
+import { useId, useRef, useState, type CSSProperties, type KeyboardEvent, type ReactNode, type TextareaHTMLAttributes, type InputHTMLAttributes } from 'react'
+import { isHex } from '../theme'
 import chevronUp from '../assets/icons/chevron-up.svg'
 import chevronDown from '../assets/icons/chevron-down.svg'
 import alertCircle from '../assets/icons/alert-circle.svg'
@@ -233,4 +234,112 @@ export function Segmented<T extends string>({ label, options, value, onChange, c
 
 export function Chip({ children }: { children: ReactNode }) {
   return <span className="chip">{children}</span>
+}
+
+/* ---------- Reset (inline text action) ---------- */
+
+function ResetButton({ label, onClick }: { label: string; onClick: () => void }) {
+  return (
+    <button type="button" className="reset-btn t-caption" aria-label={`Reset ${label}`} title="Back to the theme default" onClick={onClick}>
+      Reset
+    </button>
+  )
+}
+
+/* ---------- Input/Color (swatch picker + hex) ---------- */
+
+type ColorFieldProps = {
+  label: string
+  value: string
+  onChange: (value: string) => void
+  /** Shown when the value differs from the theme default. */
+  onReset?: () => void
+}
+
+export function ColorField({ label, value, onChange, onReset }: ColorFieldProps) {
+  const id = useId()
+  const [draft, setDraft] = useState(value)
+  const [synced, setSynced] = useState(value)
+  // Follow outside changes (picker, reset, theme switch) without clobbering a half-typed hex.
+  if (synced !== value) {
+    setSynced(value)
+    setDraft(value)
+  }
+
+  const onDraft = (next: string) => {
+    setDraft(next)
+    const hex = (next.startsWith('#') ? next : `#${next}`).toLowerCase()
+    if (isHex(hex)) onChange(hex)
+  }
+
+  return (
+    <div className={`color-field${onReset ? ' color-field--custom' : ''}`}>
+      <span className="color-field__swatch" style={{ background: value }}>
+        <input type="color" value={value} aria-label={`${label} picker`} onChange={(e) => onChange(e.target.value)} />
+      </span>
+      <span className="color-field__copy">
+        <label htmlFor={id} className="t-caption t-muted color-field__label">
+          {label}
+        </label>
+        <input
+          id={id}
+          className="color-field__hex t-label"
+          value={draft}
+          maxLength={7}
+          spellCheck={false}
+          autoComplete="off"
+          onChange={(e) => onDraft(e.target.value.trim())}
+          onBlur={() => setDraft(value)}
+        />
+      </span>
+      {onReset && <ResetButton label={label} onClick={onReset} />}
+    </div>
+  )
+}
+
+/* ---------- Input/Slider ---------- */
+
+type SliderProps = {
+  label: string
+  value: number
+  min: number
+  max: number
+  step?: number
+  /** Text shown next to the label, e.g. "12px". */
+  display: string
+  onChange: (value: number) => void
+  onReset?: () => void
+  helper?: string
+}
+
+export function Slider({ label, value, min, max, step = 1, display, onChange, onReset, helper }: SliderProps) {
+  const id = useId()
+  const fill = ((Math.min(max, Math.max(min, value)) - min) / (max - min)) * 100
+
+  return (
+    <div className="slider">
+      <div className="field__header">
+        <label htmlFor={id} className="t-label">
+          {label}
+        </label>
+        <span className="slider__value">
+          {onReset && <ResetButton label={label} onClick={onReset} />}
+          <span className="t-numeral">{display}</span>
+        </span>
+      </div>
+      <input
+        id={id}
+        type="range"
+        className="slider__input"
+        min={min}
+        max={max}
+        step={step}
+        value={Math.min(max, Math.max(min, value))}
+        aria-valuetext={display}
+        style={{ '--fill': `${fill}%` } as CSSProperties}
+        onChange={(e) => onChange(Number(e.target.value))}
+      />
+      {helper && <p className="t-caption t-muted">{helper}</p>}
+    </div>
+  )
 }
